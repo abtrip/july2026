@@ -1,0 +1,50 @@
+name: Scheduled Azure Compliance Audit
+
+on:
+  push:
+    branches: [ "main" ]
+  schedule:
+    - cron: '0 0 * * 1' # Automatically runs every Monday at midnight
+  workflow_dispatch: # Allows you to trigger the audit manually via the UI
+
+permissions:
+  id-token: write # Mandatory for acquiring OIDC tokens from Azure
+  contents: read  # Required to checkout code
+
+jobs:
+  run-compliance-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Log in to Azure via OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Execute Azure Resource Graph Query
+        uses: azure/cli@v2
+        with:
+          azcliversion: latest
+          inlineScript: |
+            echo "Running Resource Graph Compliance Audit Query..."
+            
+            # Escape newlines in the KQL query string for the CLI runner
+            KQL_QUERY="resources | where type =~ 'microsoft.storage/storageaccounts' | project name, location, resourceGroup, publicAccess = properties.publicNetworkAccess, skuName = sku.name"
+            
+            # Execute the query and output directly to a clean JSON/CSV file
+            az graph query -q "$KQL_QUERY" --output json > storage-compliance-report.json
+            
+            # Convert JSON results to human-readable format or read counts
+            TOTAL_ACCOUNTS=$(jq '.data | length' storage-compliance-report.json)
+            echo "✔ Audit completed successfully. Discovered $TOTAL_ACCOUNTS Storage Accounts."
+
+      - name: Upload Audit Evidence Asset
+        uses: actions/upload-artifact@v4
+        with:
+          name: Azure-Storage-Compliance-Proof
+          path: storage-compliance-report.json
+          retention-days: 90 # Keeps the evidence file safe for 90 days
