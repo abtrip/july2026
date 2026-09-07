@@ -1,3 +1,5 @@
+"""Tic Tac Toe move selection using a minimax search."""
+
 from functools import lru_cache
 
 WIN_LINES = (
@@ -13,6 +15,7 @@ WIN_LINES = (
 
 
 def _winner(board: str):
+    """Return the winner token, draw marker, or None for an unfinished game."""
     for a, b, c in WIN_LINES:
         token = board[a]
         if token != " " and token == board[b] and token == board[c]:
@@ -24,6 +27,7 @@ def _winner(board: str):
 
 @lru_cache(maxsize=None)
 def _solve(board: str, player: str) -> int:
+    """Score a position for the current player: win=1, draw=0, loss=-1."""
     result = _winner(board)
     if result == "D":
         return 0
@@ -44,6 +48,7 @@ def _solve(board: str, player: str) -> int:
 
 
 def best_move(board: str, player: str) -> int:
+    """Return the best move index for player, or -1 when no moves are available."""
     if len(board) != 9:
         raise ValueError("Board must be a 9-character string")
     if player not in {"X", "O"}:
