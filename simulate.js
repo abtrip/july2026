@@ -1,7 +1,7 @@
 const { io } = require('socket.io-client');
 
 // TARGET SETTINGS
-const SERVER_URL = process.env.WEB_PUBSUB_ENDPOINT || 'https://<your-service-name>.webpubsub.azure.com';
+const SERVER_URL = process.env.WEB_PUBSUB_ENDPOINT || 'https://testpubsubdaksh.webpubsub.azure.com';
 const CONTAINER_ID = process.env.CONTAINER_ID || '0';
 const TOTAL_CLIENTS = 40000; 
 const CLIENT_BATCH_SIZE = 50; 
